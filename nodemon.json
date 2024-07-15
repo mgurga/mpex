@@ -1,0 +1,7 @@
+{
+  "watch": ["src", "dist/index.html"],
+  "ignore": ["node_modules"],
+  "ext": "tsx,ts,jsx,js,json,html",
+  "exec": "npm run serve",
+  "legacyWatch": true
+}
