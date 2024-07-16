@@ -1,5 +1,6 @@
 import { Page } from "./types.ts";
-import { bgctx, gamectx, gw, gh, leftpressed, rightpressed, zpressed, noleft, noright, bgw, bgh } from "./main.ts";
+import { bgctx, gamectx, gw, gh, bgw, bgh } from "./main.ts";
+import { leftpressed, rightpressed, zpressed, noleft, noright } from "./Inputs.ts"
 import Controls from "../assets/controls.png";
 import { getImageElement, gwp, ghp, rainbow } from "./Utils.ts"
 import { Game } from "./Game.ts";
