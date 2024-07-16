@@ -1,17 +1,41 @@
 import { Page } from "./types.ts";
-import { gamectx, gw, gh, leftpressed, rightpressed, zpressed, noleft, noright } from "./main.ts";
+import { bgctx, gamectx, gw, gh, leftpressed, rightpressed, zpressed, noleft, noright, bgw, bgh } from "./main.ts";
 import Controls from "../assets/controls.png";
 import { getImageElement, gwp, ghp, rainbow } from "./Utils.ts"
-// import { rainbow } from "./Utils.ts"
+import { Game } from "./Game.ts";
 
 export class MainMenu implements Page {
     next_page: Page | null = null;
     choice: number = 0;
     tick: number = 0;
+    transition_tick: number = 0;
+    menu_image: ImageData;
 
-    constructor() {}
+    constructor() { }
 
     draw(): void {
+        if (this.transition_tick >= 1) {
+            gamectx.fillStyle = "white";
+            gamectx.fillRect(0, 0, gw, gh);
+
+            gamectx.putImageData(this.menu_image, 0, this.transition_tick);
+
+            for (let i = 0; i < 18; i++) {
+                gamectx.fillStyle = `rgb(${i * 15}, ${i * 15}, ${i * 15})`;
+                gamectx.fillRect(0, this.transition_tick - (i * 45), gw, 45);
+                let bgcolor = (this.transition_tick / (gh * 2)) * 255;
+                bgctx.fillStyle = `rgb(${bgcolor}, ${bgcolor}, ${bgcolor})`;
+                bgctx.fillRect(0, 0, bgw, bgh);
+            }
+
+            this.transition_tick += 20;
+            this.tick++;
+
+            if (this.transition_tick >= gh * 2) this.next_page = new Game();
+
+            return;
+        }
+
         gamectx.fillStyle = "black";
         gamectx.fillRect(0, 0, gw, gh);
 
@@ -21,7 +45,10 @@ export class MainMenu implements Page {
 
         if (leftpressed && this.choice > 0) { this.choice--; noleft(); }
         if (rightpressed && this.choice < 2) { this.choice++; noright(); }
-        if (zpressed) { console.log(`choice #${this.choice} clicked`); }
+        if (zpressed) {
+            this.transition_tick = 1;
+            this.menu_image = gamectx.getImageData(0, 0, gw, gh);
+        }
 
         this.tick++;
     }
