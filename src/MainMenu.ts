@@ -24,7 +24,7 @@ export class MainMenu implements Page {
             for (let i = 0; i < 18; i++) {
                 gamectx.fillStyle = `rgb(${i * 15}, ${i * 15}, ${i * 15})`;
                 gamectx.fillRect(0, this.transition_tick - (i * 45), gw, 45);
-                let bgcolor = (this.transition_tick / (gh * 2)) * 255;
+                let bgcolor = ((this.transition_tick + 10) / (gh * 2)) * 255;
                 bgctx.fillStyle = `rgb(${bgcolor}, ${bgcolor}, ${bgcolor})`;
                 bgctx.fillRect(0, 0, bgw, bgh);
             }
