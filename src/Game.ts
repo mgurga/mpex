@@ -1,7 +1,8 @@
 import { bgctx, gamectx, bgcanvas, gamecanvas, gw, gh, bgw, bgh } from "./main";
 import { Page } from "./types";
 import { ColorScheme } from "./ColorScheme"
-import { hexToRGB } from "./Utils";
+import { hexToRGB, gwp, ghp } from "./Utils";
+import { Timer } from "./Timer";
 
 const LANES: number = 7;
 
@@ -10,9 +11,11 @@ export class Game implements Page {
     next_page: Page | null = null;
     tick: number = 0;
     cs: ColorScheme;
+    timer: Timer;
 
     constructor() {
         this.cs = new ColorScheme();
+        this.timer = new Timer();
     }
 
     draw() {
@@ -38,8 +41,11 @@ export class Game implements Page {
 
             this.tick++;
             return;
+        } else if (this.tick == 100) {
+            this.timer.start();
         }
 
+        this.timer.draw(gwp(50), ghp(55), this.cs);
         this.draw_lanes();
         this.draw_border();
 
