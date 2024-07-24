@@ -6,5 +6,5 @@ export interface Page {
 }
 
 export interface Drawable {
-    draw(x: number, y: number, cs: ColorScheme): void;
+    draw(x: number, y: number, cs: ColorScheme, w?: number, h?: number): void;
 }
