@@ -24,3 +24,9 @@ export function hexToRGB(hex: string) {
     // r /= 255, g /= 255, b /= 255;
     return [r, g, b];
 }
+
+export function rand(min: number, max: number): number {
+    const minCeiled = Math.ceil(min);
+    const maxFloored = Math.floor(max);
+    return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled);
+}

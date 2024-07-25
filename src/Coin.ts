@@ -14,9 +14,9 @@ export class Coin implements Drawable {
         gamectx.arc(x + (w! / 2), y + (h! / 2), (w! / 2), 0, 2 * Math.PI);
         gamectx.stroke();
 
-        gamectx.font = "regular 5px sixtyfour";
+        gamectx.font = "20px sixtyfour";
         gamectx.textAlign = "center";
         gamectx.fillStyle = "#ffc919";
-        gamectx.fillText(this.value + "", x + (w! / 2), y + (h! / 2));
+        gamectx.fillText(this.value + "", x + (w! / 2), y + (h! / 2) + 10);
     }
 }

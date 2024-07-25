@@ -3,8 +3,9 @@ import { Page } from "./types";
 import { ColorScheme } from "./ColorScheme"
 import { hexToRGB, gwp, ghp } from "./Utils";
 import { Timer } from "./Timer";
+import { Board } from "./Board";
 
-const LANES: number = 7;
+export const LANES: number = 7;
 
 export class Game implements Page {
 
@@ -12,15 +13,17 @@ export class Game implements Page {
     tick: number = 0;
     cs: ColorScheme;
     timer: Timer;
+    board: Board;
 
     constructor() {
         this.cs = new ColorScheme();
         this.timer = new Timer();
+        this.board = new Board();
     }
 
     draw() {
-        gamecanvas.style.filter = "grayscale(1)";
-        bgcanvas.style.filter = "grayscale(1)";
+        // gamecanvas.style.filter = "grayscale(1)";
+        // bgcanvas.style.filter = "grayscale(1)";
 
         gamectx.fillStyle = this.cs.bg;
         gamectx.fillRect(0, 0, gw, gh);
@@ -48,6 +51,7 @@ export class Game implements Page {
         this.timer.draw(gwp(50), ghp(55), this.cs);
         this.draw_lanes();
         this.draw_border();
+        this.board.draw(10, 10, this.cs, gw - 20, gh - 20);
 
         this.tick++;
     }
