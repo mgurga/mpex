@@ -5,25 +5,23 @@ import { hexToRGB, gwp, ghp } from "./Utils";
 import { Timer } from "./Timer";
 import { Board } from "./Board";
 import { Player } from "./Player";
-import { leftpressed, noleft, noright, rightpressed } from "./Inputs";
+import { leftpressed, noleft, noright, noz, rightpressed, zpressed } from "./Inputs";
 
 export const LANES: number = 7;
 
 export class Game implements Page {
-
     next_page: Page | null = null;
     tick: number = 0;
     cs: ColorScheme;
     timer: Timer;
     board: Board;
-    player_lane: number = Math.floor(LANES / 2);
     player: Player;
 
     constructor() {
         this.cs = new ColorScheme();
         this.timer = new Timer();
         this.board = new Board();
-        this.player = new Player();
+        this.player = new Player(Math.floor(LANES / 2));
     }
 
     get_lane_x(l: number): number { return 15 + (l * ((gw - 30) / LANES)); }
@@ -34,12 +32,16 @@ export class Game implements Page {
         // bgcanvas.style.filter = "grayscale(1)";
 
         if (rightpressed) {
-            if (this.player_lane < LANES - 1) this.player_lane++;
+            if (this.player.lane < LANES - 1) this.player.lane++;
             noright();
         }
         if (leftpressed) {
-            if (this.player_lane > 0) this.player_lane--;
+            if (this.player.lane > 0) this.player.lane--;
             noleft();
+        }
+        if (zpressed) {
+            this.player.held_coins = this.board.grab_coins(this.player.lane);
+            noz();
         }
 
         gamectx.fillStyle = this.cs.bg;
@@ -60,7 +62,7 @@ export class Game implements Page {
         this.draw_lanes();
         this.draw_border();
         this.board.draw(10, 10, this.cs, gw - 20, gh - 20);
-        this.player.draw(this.get_lane_x(this.player_lane) + 6, gh - 15 - this.get_lane_width(), this.cs, this.get_lane_width(), this.get_lane_width() - 5);
+        this.player.draw(this.get_lane_x(this.player.lane) + 6, gh - 15 - this.get_lane_width(), this.cs, this.get_lane_width(), this.get_lane_width() - 5);
 
         this.tick++;
     }

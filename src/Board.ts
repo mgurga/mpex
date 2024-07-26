@@ -6,9 +6,34 @@ import { gwp, rand } from "./Utils";
 import { gamectx, gw } from "./main";
 
 class BoardColumn {
-    col: Coin[] = [];
+    private col: Coin[] = [];
 
     add_coin(c: Coin) { this.col.push(c); }
+    get_coin(i: number): Coin { return this.col[i] }
+
+    size(): number { return this.col.length; }
+
+    grab_coins(): Coin[] {
+        let out: Coin[] = [];
+
+        for (let i = this.size() - 1; i >= 0; i--) {
+            let last_coin = this.col.pop();
+            if (last_coin == undefined) break;
+
+            if (out.length == 0) {
+                out.push(last_coin);
+            } else {
+                if (out[out.length - 1].value == last_coin.value) {
+                    out.push(last_coin);
+                } else {
+                    this.col.push(last_coin);
+                    break;
+                }
+            }
+        }
+
+        return out;
+    }
 }
 
 export class Board implements Drawable {
@@ -17,7 +42,7 @@ export class Board implements Drawable {
     constructor() {
         for (let i = 0; i < LANES; i++) {
             let bc = new BoardColumn();
-            
+
             for (let j = 0; j < 3; j++) {
                 let r = rand(1, 4);
                 if (r == 1) {
@@ -30,7 +55,7 @@ export class Board implements Drawable {
                     bc.add_coin(new Coin(50));
                 }
             }
-            
+
             this.board.push(bc);
         }
     }
@@ -44,10 +69,14 @@ export class Board implements Drawable {
         for (let i = 0; i < LANES; i++) {
             let bc = this.board[i];
 
-            for (let j = 0; j < bc.col.length; j++) {
+            for (let j = 0; j < bc.size(); j++) {
                 let coinsize = ((gw - 30) / LANES) - 10;
-                bc.col[j].draw(i * ((gw - 30) / LANES) + 20, (j * (coinsize + 10)) + 17, cs, coinsize, coinsize);
+                bc.get_coin(j).draw(i * ((gw - 30) / LANES) + 20, (j * (coinsize + 10)) + 17, cs, coinsize, coinsize);
             }
         }
+    }
+
+    grab_coins(lane: number): Coin[] {
+        return this.board[lane].grab_coins();
     }
 }
