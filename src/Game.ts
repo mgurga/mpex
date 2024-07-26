@@ -4,6 +4,8 @@ import { ColorScheme } from "./ColorScheme"
 import { hexToRGB, gwp, ghp } from "./Utils";
 import { Timer } from "./Timer";
 import { Board } from "./Board";
+import { Player } from "./Player";
+import { leftpressed, noleft, noright, rightpressed } from "./Inputs";
 
 export const LANES: number = 7;
 
@@ -14,16 +16,31 @@ export class Game implements Page {
     cs: ColorScheme;
     timer: Timer;
     board: Board;
+    player_lane: number = Math.floor(LANES / 2);
+    player: Player;
 
     constructor() {
         this.cs = new ColorScheme();
         this.timer = new Timer();
         this.board = new Board();
+        this.player = new Player();
     }
 
-    draw() {
+    get_lane_x(l: number): number { return 15 + (l * ((gw - 30) / LANES)); }
+    get_lane_width(): number { return ((gw - 30) / LANES) - 10; }
+
+    draw(): void {
         // gamecanvas.style.filter = "grayscale(1)";
         // bgcanvas.style.filter = "grayscale(1)";
+
+        if (rightpressed) {
+            if (this.player_lane < LANES - 1) this.player_lane++;
+            noright();
+        }
+        if (leftpressed) {
+            if (this.player_lane > 0) this.player_lane--;
+            noleft();
+        }
 
         gamectx.fillStyle = this.cs.bg;
         gamectx.fillRect(0, 0, gw, gh);
@@ -32,16 +49,7 @@ export class Game implements Page {
         bgctx.fillRect(0, 0, bgw, bgh);
 
         if (this.tick < 100) {
-            for (let i = 0; i < Math.floor(this.tick / 20); i++) {
-                let c = hexToRGB(this.cs.fg);
-                gamectx.strokeStyle = `rgb(${c[0] - (i * 10)}, ${c[1] - (i * 10)}, ${c[2] - (i * 10)})`;
-
-                gamectx.lineWidth = 3;
-                gamectx.beginPath();
-                gamectx.roundRect(i * 2, i * 2, gw - (i * 4), gh - (i * 4), 5);
-                gamectx.stroke();
-            }
-
+            this.intro_anim();
             this.tick++;
             return;
         } else if (this.tick == 100) {
@@ -52,11 +60,24 @@ export class Game implements Page {
         this.draw_lanes();
         this.draw_border();
         this.board.draw(10, 10, this.cs, gw - 20, gh - 20);
+        this.player.draw(this.get_lane_x(this.player_lane) + 6, gh - 15 - this.get_lane_width(), this.cs, this.get_lane_width(), this.get_lane_width() - 5);
 
         this.tick++;
     }
 
-    draw_lanes() {
+    intro_anim(): void {
+        for (let i = 0; i < Math.floor(this.tick / 20); i++) {
+            let c = hexToRGB(this.cs.fg);
+            gamectx.strokeStyle = `rgb(${c[0] - (i * 10)}, ${c[1] - (i * 10)}, ${c[2] - (i * 10)})`;
+
+            gamectx.lineWidth = 3;
+            gamectx.beginPath();
+            gamectx.roundRect(i * 2, i * 2, gw - (i * 4), gh - (i * 4), 5);
+            gamectx.stroke();
+        }
+    }
+
+    draw_lanes(): void {
         gamectx.fillStyle = this.cs.am;
         for (let l = 1; l < LANES; l++) {
             for (let d = 0; d < gh / 30; d++) {
@@ -65,7 +86,7 @@ export class Game implements Page {
         }
     }
 
-    draw_border() {
+    draw_border(): void {
         for (let i = 0; i < 5; i++) {
             let c = hexToRGB(this.cs.fg);
             gamectx.strokeStyle = `rgb(${c[0] - (i * 10)}, ${c[1] - (i * 10)}, ${c[2] - (i * 10)})`;
