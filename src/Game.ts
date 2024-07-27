@@ -26,6 +26,17 @@ export class Game implements Page {
 
     get_lane_x(l: number): number { return 15 + (l * ((gw - 30) / LANES)); }
     get_lane_width(): number { return ((gw - 30) / LANES) - 10; }
+    coin_grabbable(): boolean {
+        // player not holding coins
+        if (this.player.held_coins.length == 0)
+            return true;
+
+        // player holding coins of same value
+        if (this.player.held_coins[0].value == this.board.first_coin(this.player.lane).value)
+            return true;
+
+        return false;
+    }
 
     draw(): void {
         // gamecanvas.style.filter = "grayscale(1)";
@@ -39,8 +50,9 @@ export class Game implements Page {
             if (this.player.lane > 0) this.player.lane--;
             noleft();
         }
-        if (zpressed) {
-            this.player.held_coins = this.board.grab_coins(this.player.lane);
+        if (zpressed && this.coin_grabbable()) {
+            for (let c of this.board.grab_coins(this.player.lane))
+                this.player.held_coins.push(c);
             noz();
         }
 

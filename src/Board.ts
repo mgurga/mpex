@@ -79,4 +79,8 @@ export class Board implements Drawable {
     grab_coins(lane: number): Coin[] {
         return this.board[lane].grab_coins();
     }
+
+    first_coin(lane: number): Coin {
+        return this.board[lane].get_coin(this.board[lane].size() - 1);
+    }
 }
