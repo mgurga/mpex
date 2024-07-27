@@ -5,7 +5,7 @@ import { hexToRGB, gwp, ghp } from "./Utils";
 import { Timer } from "./Timer";
 import { Board } from "./Board";
 import { Player } from "./Player";
-import { leftpressed, noleft, noright, noz, rightpressed, zpressed } from "./Inputs";
+import { leftpressed, noleft, noright, nox, noz, rightpressed, xpressed, zpressed } from "./Inputs";
 
 export const LANES: number = 7;
 
@@ -32,7 +32,8 @@ export class Game implements Page {
             return true;
 
         // player holding coins of same value
-        if (this.player.held_coins[0].value == this.board.first_coin(this.player.lane).value)
+        if (this.board.first_coin(this.player.lane) == undefined) return false;
+        if (this.player.held_coins[0].value == this.board.first_coin(this.player.lane)!.value)
             return true;
 
         return false;
@@ -54,6 +55,11 @@ export class Game implements Page {
             for (let c of this.board.grab_coins(this.player.lane))
                 this.player.held_coins.push(c);
             noz();
+        }
+        if (xpressed && this.player.held_coins.length != 0) {
+            this.board.shoot_coins(this.player.lane, this.player.held_coins);
+            this.player.held_coins = [];
+            nox();
         }
 
         gamectx.fillStyle = this.cs.bg;

@@ -76,11 +76,18 @@ export class Board implements Drawable {
         }
     }
 
+    shoot_coins(lane: number, coins: Coin[]): void {
+        for (let c of coins)
+            this.board[lane].add_coin(c);
+    }
+
     grab_coins(lane: number): Coin[] {
         return this.board[lane].grab_coins();
     }
 
-    first_coin(lane: number): Coin {
+    first_coin(lane: number): Coin | undefined {
+        if (this.board[lane].size() == 0)
+            return undefined;
         return this.board[lane].get_coin(this.board[lane].size() - 1);
     }
 }
