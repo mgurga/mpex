@@ -105,7 +105,7 @@ export class Board implements Drawable {
 
         if (start_coin_pos.val == 1 && adj_coins.length >= 5) {
             for (let i = 0; i < 5; i++) {
-                this.board[adj_coins[i].col].get_coin(adj_coins[i].row).value = -1;
+                this.board[adj_coins[i].col].get_coin(adj_coins[i].row).sparkle();
             }
         }
     }
