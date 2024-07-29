@@ -5,7 +5,7 @@ import { LANES } from "./Game"
 import { gwp, rand } from "./Utils";
 import { gamectx, gw } from "./main";
 
-class CoinPos {
+export class CoinPos {
     row: number;
     col: number;
     val: number;
@@ -99,20 +99,26 @@ export class Board implements Drawable {
     }
 
     update_board(start_lane: number): void {
-        let start_coin_pos = new CoinPos(start_lane, this.board[start_lane].size() - 1, this.board[start_lane].back()!.value);
+        let bc = this.board[start_lane];
+        let start_coin_pos = new CoinPos(start_lane, bc.size() - 1, bc.back()!.value);
         let adj_coins = this.get_adj_coins(start_coin_pos);
 
-        if (start_coin_pos.val == 1 && adj_coins.length - 1 >= 5) {
+        if (start_coin_pos.val == 1 && adj_coins.length >= 5) {
             for (let i = 0; i < 5; i++) {
-                // this.board[adj_coins[i].col].get_coin(adj_coins[i].row).value = -1;
+                this.board[adj_coins[i].col].get_coin(adj_coins[i].row).value = -1;
             }
         }
     }
 
     get_adj_coins(coinpos: CoinPos): CoinPos[] {
         let adj_coins = this.get_adj_coins_rec(coinpos, 0);
-        let unique_coins = [...new Set(adj_coins)];
-        return unique_coins;
+
+        let unique_out: CoinPos[] = [];
+        for (let cp of adj_coins)
+            if (this.unique_check(unique_out, cp))
+                unique_out.push(cp);
+
+        return unique_out;
     }
 
     get_adj_coins_rec(coinpos: CoinPos, steps: number): CoinPos[] {
@@ -147,19 +153,19 @@ export class Board implements Drawable {
         }
 
         // remove duplicates every recursion step
-        const unique_check = (unique_out: CoinPos[], cp: CoinPos) => {
-            for (let c of unique_out)
-                if (c.col == cp.col && c.row == cp.row)
-                    return false;
-            return true;
-        }
-
         let unique_out: CoinPos[] = [];
         for (let cp of out)
-            if (unique_check(unique_out, cp))
+            if (this.unique_check(unique_out, cp))
                 unique_out.push(cp);
 
         return unique_out;
+    }
+
+    unique_check(unique_out: CoinPos[], cp: CoinPos): boolean {
+        for (let c of unique_out)
+            if (c.col == cp.col && c.row == cp.row)
+                return false;
+        return true;
     }
 
     shoot_coins(lane: number, coins: Coin[]): void {
