@@ -2,8 +2,9 @@ import { Drawable } from "./types";
 import { Coin } from "./Coin"
 import { ColorScheme } from "./ColorScheme";
 import { LANES } from "./Game"
-import { gwp, rand } from "./Utils";
-import { gamectx, gw } from "./main";
+import { rand } from "./Utils";
+import { gw } from "./main";
+import easingsFunctions from "./Easings"
 
 class CoinPos {
     row: number;
@@ -173,7 +174,7 @@ export class Board implements Drawable {
             let progress = (this.tick - anim.start_tick) / (anim.end_tick - anim.start_tick);
             let c = new Coin(anim.coin_value);
             c.draw(anim.x1 + (anim.x2 - anim.x1) * progress,
-                anim.y1 + (anim.y2 - anim.y1) * progress,
+                anim.y1 + (anim.y2 - anim.y1) * easingsFunctions.easeOutBounce(progress),
                 cs, this.get_coin_size(), this.get_coin_size());
 
             if (anim.end_tick <= this.tick) {
