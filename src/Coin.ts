@@ -6,6 +6,7 @@ import { rand } from "./Utils";
 export class Coin implements Drawable {
     value: number;
     sparkle_timer: number = 0;
+    cleanup: boolean = false;
 
     constructor(value: number) { this.value = value; }
 
@@ -44,6 +45,7 @@ export class Coin implements Drawable {
             gamectx.fill(region);
         }
 
+        if (this.sparkle_timer == 1) this.cleanup = true;
         this.sparkle_timer--;
     }
 

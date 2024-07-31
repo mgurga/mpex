@@ -20,13 +20,17 @@ export class CoinPos {
 class BoardColumn {
     private col: Coin[] = [];
 
-    add_coin(c: Coin) { this.col.push(c); }
-    get_coin(i: number): Coin { return this.col[i] }
+    add_coin(c: Coin): void { this.col.push(c); }
+    get_coin(i: number): Coin | undefined { return this.col[i] }
 
     front(): Coin | undefined { return this.col[0]; }
     back(): Coin | undefined { return this.col[this.size() - 1]; }
 
     size(): number { return this.col.length; }
+
+    remove_coin(i: number): void {
+        delete this.col[i];
+    }
 
     grab_coins(): Coin[] {
         let out: Coin[] = [];
@@ -53,6 +57,7 @@ class BoardColumn {
 
 export class Board implements Drawable {
     board: BoardColumn[] = [];
+    tick: number = 0;
 
     constructor() {
         for (let i = 0; i < LANES; i++) {
@@ -88,14 +93,37 @@ export class Board implements Drawable {
             return;
         }
 
+        this.cleanup_board();
+
         for (let i = 0; i < LANES; i++) {
             let bc = this.board[i];
+            let bcsize = bc.size();
 
-            for (let j = 0; j < bc.size(); j++) {
+            for (let j = 0; j < bcsize; j++) {
                 let coinsize = ((gw - 30) / LANES) - 10;
-                bc.get_coin(j).draw(i * ((gw - 30) / LANES) + 20, (j * (coinsize + 10)) + 17, cs, coinsize, coinsize);
+                if (bc.get_coin(j) == undefined) continue;
+                bc.get_coin(j)!.draw(i * ((gw - 30) / LANES) + 20, (j * (coinsize + 10)) + 17, cs, coinsize, coinsize);
             }
         }
+
+        this.tick++;
+    }
+
+    cleanup_board(): void {
+        let rerun = false;
+        for (let i = 0; i < LANES; i++) {
+            let bc = this.board[i];
+            for (let j = 0; j < bc.size(); j++) {
+                if (bc.get_coin(j) == undefined) continue;
+                if (bc.get_coin(j)!.cleanup) {
+                    bc.remove_coin(j);
+                    rerun = true;
+                    break;
+                }
+            }
+            if (rerun) break;
+        }
+        if (rerun) this.cleanup_board();
     }
 
     update_board(start_lane: number): void {
@@ -105,7 +133,7 @@ export class Board implements Drawable {
 
         if (start_coin_pos.val == 1 && adj_coins.length >= 5) {
             for (let i = 0; i < 5; i++) {
-                this.board[adj_coins[i].col].get_coin(adj_coins[i].row).sparkle();
+                this.board[adj_coins[i].col].get_coin(adj_coins[i].row)!.sparkle();
             }
         }
     }
