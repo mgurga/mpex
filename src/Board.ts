@@ -5,7 +5,7 @@ import { LANES } from "./Game"
 import { gwp, rand } from "./Utils";
 import { gamectx, gw } from "./main";
 
-export class CoinPos {
+class CoinPos {
     row: number;
     col: number;
     val: number;
@@ -14,6 +14,52 @@ export class CoinPos {
         this.row = row;
         this.col = col;
         this.val = val;
+    }
+}
+
+enum Action {
+    AddCoin,
+    ScreenFlash
+};
+
+class AfterAction {
+    action: Action;
+    constructor(a: Action) { this.action = a; }
+}
+
+class AddCoinAction extends AfterAction {
+    value: number;
+    lane: number;
+
+    constructor(value: number, lane: number) {
+        super(Action.AddCoin);
+        this.value = value;
+        this.lane = lane;
+    }
+}
+
+class CoinAnim {
+    start_tick: number;
+    end_tick: number;
+
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+
+    coin_value: number;
+
+    after_action: AfterAction;
+
+    constructor(st: number, et: number, x1: number, y1: number, x2: number, y2: number, cv: number, aa: AfterAction) {
+        this.start_tick = st;
+        this.end_tick = et;
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
+        this.coin_value = cv;
+        this.after_action = aa;
     }
 }
 
@@ -28,8 +74,12 @@ class BoardColumn {
 
     size(): number { return this.col.length; }
 
-    remove_coin(i: number): void {
-        delete this.col[i];
+    remove_coin(i: number): void { delete this.col[i]; }
+
+    cleanup() {
+        this.col = this.col.filter(function (obj) {
+            return obj.cleanup != true;
+        });
     }
 
     grab_coins(): Coin[] {
@@ -57,6 +107,7 @@ class BoardColumn {
 
 export class Board implements Drawable {
     board: BoardColumn[] = [];
+    anims: CoinAnim[] = [];
     tick: number = 0;
 
     constructor() {
@@ -87,6 +138,10 @@ export class Board implements Drawable {
     }
     get_coin_pos(c: CoinPos): Coin | undefined { return this.get_coin(c.col, c.row); }
 
+    get_lane_width(): number { return ((gw - 30) / LANES); }
+    get_coin_size(): number { return ((gw - 30) / LANES) - 10; }
+    get_row_height(): number { return (this.get_coin_size() + 10); }
+
     draw(x: number, y: number, cs: ColorScheme, w?: number, h?: number): void {
         if (w == undefined || h == undefined) {
             console.error("width or height not defined");
@@ -100,30 +155,49 @@ export class Board implements Drawable {
             let bcsize = bc.size();
 
             for (let j = 0; j < bcsize; j++) {
-                let coinsize = ((gw - 30) / LANES) - 10;
                 if (bc.get_coin(j) == undefined) continue;
-                bc.get_coin(j)!.draw(i * ((gw - 30) / LANES) + 20, (j * (coinsize + 10)) + 17, cs, coinsize, coinsize);
+                let coinsize = this.get_coin_size();
+                bc.get_coin(j)!.draw(i * this.get_lane_width() + 20, (j * (coinsize + 10)) + 17, cs, coinsize, coinsize);
             }
         }
+
+        this.draw_anims(cs);
 
         this.tick++;
     }
 
-    cleanup_board(): void {
-        let rerun = false;
-        for (let i = 0; i < LANES; i++) {
-            let bc = this.board[i];
-            for (let j = 0; j < bc.size(); j++) {
-                if (bc.get_coin(j) == undefined) continue;
-                if (bc.get_coin(j)!.cleanup) {
-                    bc.remove_coin(j);
-                    rerun = true;
-                    break;
-                }
+    draw_anims(cs: ColorScheme): void {
+        for (let anim of this.anims) {
+            if (anim.start_tick > this.tick) continue;
+
+            let progress = (this.tick - anim.start_tick) / (anim.end_tick - anim.start_tick);
+            let c = new Coin(anim.coin_value);
+            c.draw(anim.x1 + (anim.x2 - anim.x1) * progress,
+                anim.y1 + (anim.y2 - anim.y1) * progress,
+                cs, this.get_coin_size(), this.get_coin_size());
+
+            if (anim.end_tick <= this.tick) {
+                this.handle_after_action(anim.after_action);
+                console.log(anim);
+                continue;
             }
-            if (rerun) break;
         }
-        if (rerun) this.cleanup_board();
+
+        this.anims = this.anims.filter((obj) => {
+            return obj.end_tick > this.tick;
+        });
+    }
+
+    handle_after_action(aa: AfterAction): void {
+        if (aa.action == Action.AddCoin) {
+            let aca = aa as AddCoinAction;
+            this.board[aca.lane].add_coin(new Coin(aca.value));
+        }
+    }
+
+    cleanup_board(): void {
+        for (let i = 0; i < LANES; i++)
+            this.board[i].cleanup();
     }
 
     update_board(start_lane: number): void {
@@ -132,9 +206,21 @@ export class Board implements Drawable {
         let adj_coins = this.get_adj_coins(start_coin_pos);
 
         if (start_coin_pos.val == 1 && adj_coins.length >= 5) {
+            let lowest_row = adj_coins[0].row;
+
             for (let i = 0; i < 5; i++) {
                 this.board[adj_coins[i].col].get_coin(adj_coins[i].row)!.sparkle();
+
+                if (adj_coins[0].col == adj_coins[i].col && lowest_row > adj_coins[i].row)
+                    lowest_row = adj_coins[i].row;
             }
+
+            let aa: AfterAction = new AddCoinAction(5, adj_coins[0].col);
+            let ca = new CoinAnim(this.tick + 50, this.tick + 50 + (adj_coins[0].row - lowest_row) * 10,
+                this.get_lane_width() * adj_coins[0].col + 20, (adj_coins[0].row * this.get_row_height()) + 17,
+                this.get_lane_width() * adj_coins[0].col + 20, (lowest_row * this.get_row_height()) + 17,
+                5, aa);
+            this.anims.push(ca);
         }
     }
 
