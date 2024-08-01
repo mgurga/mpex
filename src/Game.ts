@@ -14,6 +14,7 @@ export class Game implements Page {
     tick: number = 0;
     cs: ColorScheme;
     timer: Timer;
+    timer_tens: number = 0;
     board: Board;
     player: Player;
 
@@ -76,10 +77,15 @@ export class Game implements Page {
             this.timer.start();
         }
 
+        if (this.timer.timer % 10 == 0 && this.timer_tens != this.timer.timer) {
+            this.timer_tens = this.timer.timer;
+            this.board.shift_down();
+        }
+
         this.timer.draw(gwp(50), ghp(55), this.cs);
         this.draw_lanes();
-        this.draw_border();
         this.board.draw(10, 10, this.cs, gw - 20, gh - 20);
+        this.draw_border();
         this.player.draw(this.get_lane_x(this.player.lane) + 6, gh - 15 - this.get_lane_width(), this.cs, this.get_lane_width(), this.get_lane_width() - 5);
 
         this.tick++;

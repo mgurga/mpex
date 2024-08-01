@@ -69,6 +69,13 @@ class BoardColumn {
 
     add_coin(c: Coin): void { this.col.push(c); }
     get_coin(i: number): Coin | undefined { return this.col[i] }
+    prepend_coin(c: Coin) {
+        let oldcol = this.col;
+        this.col = [];
+        this.col.push(c);
+        for (let oc of oldcol)
+            this.col.push(oc);
+    }
 
     front(): Coin | undefined { return this.col[0]; }
     back(): Coin | undefined { return this.col[this.size() - 1]; }
@@ -109,6 +116,7 @@ class BoardColumn {
 export class Board implements Drawable {
     board: BoardColumn[] = [];
     anims: CoinAnim[] = [];
+    shift_tick: number = -1;
     tick: number = 0;
 
     constructor() {
@@ -132,16 +140,16 @@ export class Board implements Drawable {
         }
     }
 
-    get_coin(lane: number, row: number): Coin | undefined {
+    private get_coin(lane: number, row: number): Coin | undefined {
         if (lane < 0 || lane > LANES - 1) return undefined;
         if (row < 0 || row > this.board[lane].size() - 1) return undefined;
         return this.board[lane].get_coin(row);
     }
-    get_coin_pos(c: CoinPos): Coin | undefined { return this.get_coin(c.col, c.row); }
+    private get_coin_pos(c: CoinPos): Coin | undefined { return this.get_coin(c.col, c.row); }
 
-    get_lane_width(): number { return ((gw - 30) / LANES); }
-    get_coin_size(): number { return ((gw - 30) / LANES) - 10; }
-    get_row_height(): number { return (this.get_coin_size() + 10); }
+    private get_lane_width(): number { return ((gw - 30) / LANES); }
+    private get_coin_size(): number { return ((gw - 30) / LANES) - 10; }
+    private get_row_height(): number { return (this.get_coin_size() + 10); }
 
     draw(x: number, y: number, cs: ColorScheme, w?: number, h?: number): void {
         if (w == undefined || h == undefined) {
@@ -151,6 +159,12 @@ export class Board implements Drawable {
 
         this.cleanup_board();
 
+        let shift_offset = 0;
+        if (this.shift_tick != -1 && this.shift_tick <= this.tick && this.shift_tick + 20 >= this.tick) {
+            let progress = (this.tick - this.shift_tick) / (20);
+            shift_offset = -(this.get_coin_size() * easingsFunctions.easeInQuad(1 - progress));
+        }
+
         for (let i = 0; i < LANES; i++) {
             let bc = this.board[i];
             let bcsize = bc.size();
@@ -158,7 +172,7 @@ export class Board implements Drawable {
             for (let j = 0; j < bcsize; j++) {
                 if (bc.get_coin(j) == undefined) continue;
                 let coinsize = this.get_coin_size();
-                bc.get_coin(j)!.draw(i * this.get_lane_width() + 20, (j * (coinsize + 10)) + 17, cs, coinsize, coinsize);
+                bc.get_coin(j)!.draw(i * this.get_lane_width() + 20, (j * (coinsize + 10)) + 17 + shift_offset, cs, coinsize, coinsize);
             }
         }
 
@@ -167,7 +181,7 @@ export class Board implements Drawable {
         this.tick++;
     }
 
-    draw_anims(cs: ColorScheme): void {
+    private draw_anims(cs: ColorScheme): void {
         for (let anim of this.anims) {
             if (anim.start_tick > this.tick) continue;
 
@@ -186,14 +200,14 @@ export class Board implements Drawable {
         });
     }
 
-    handle_after_action(aa: AfterAction): void {
+    private handle_after_action(aa: AfterAction): void {
         if (aa.action == Action.AddCoin) {
             let aca = aa as AddCoinAction;
             this.board[aca.lane].add_coin(new Coin(aca.value));
         }
     }
 
-    cleanup_board(): void {
+    private cleanup_board(): void {
         for (let i = 0; i < LANES; i++)
             this.board[i].cleanup();
     }
@@ -224,7 +238,7 @@ export class Board implements Drawable {
             this.upgrade_coins(adj_coins, 5, 500);
     }
 
-    upgrade_coins(adj_coins: CoinPos[], coin_num: number, new_coin_value: number): void {
+    private upgrade_coins(adj_coins: CoinPos[], coin_num: number, new_coin_value: number): void {
         let lowest_row = adj_coins[0].row;
 
         for (let i = 0; i < coin_num; i++) {
@@ -242,7 +256,7 @@ export class Board implements Drawable {
         this.anims.push(ca);
     }
 
-    get_adj_coins(coinpos: CoinPos): CoinPos[] {
+    private get_adj_coins(coinpos: CoinPos): CoinPos[] {
         let adj_coins = this.get_adj_coins_rec(coinpos, 0);
 
         let unique_out: CoinPos[] = [];
@@ -253,7 +267,7 @@ export class Board implements Drawable {
         return unique_out;
     }
 
-    get_adj_coins_rec(coinpos: CoinPos, steps: number): CoinPos[] {
+    private get_adj_coins_rec(coinpos: CoinPos, steps: number): CoinPos[] {
         let out: CoinPos[] = [];
 
         if (steps > 10) return out;
@@ -293,11 +307,29 @@ export class Board implements Drawable {
         return unique_out;
     }
 
-    unique_check(unique_out: CoinPos[], cp: CoinPos): boolean {
+    private unique_check(unique_out: CoinPos[], cp: CoinPos): boolean {
         for (let c of unique_out)
             if (c.col == cp.col && c.row == cp.row)
                 return false;
         return true;
+    }
+
+    shift_down(): void {
+        for (let i = 0; i < LANES; i++) {
+            let bc = this.board[i];
+            let r = rand(1, 4);
+            if (r == 1) {
+                bc.prepend_coin(new Coin(1));
+            } else if (r == 2) {
+                bc.prepend_coin(new Coin(5));
+            } else if (r == 3) {
+                bc.prepend_coin(new Coin(10));
+            } else if (r == 4) {
+                bc.prepend_coin(new Coin(50));
+            }
+        }
+
+        this.shift_tick = this.tick;
     }
 
     shoot_coins(lane: number, coins: Coin[]): void {
