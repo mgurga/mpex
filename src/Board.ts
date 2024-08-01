@@ -177,11 +177,8 @@ export class Board implements Drawable {
                 anim.y1 + (anim.y2 - anim.y1) * easingsFunctions.easeOutBounce(progress),
                 cs, this.get_coin_size(), this.get_coin_size());
 
-            if (anim.end_tick <= this.tick) {
+            if (anim.end_tick <= this.tick)
                 this.handle_after_action(anim.after_action);
-                console.log(anim);
-                continue;
-            }
         }
 
         this.anims = this.anims.filter((obj) => {
@@ -206,23 +203,43 @@ export class Board implements Drawable {
         let start_coin_pos = new CoinPos(start_lane, bc.size() - 1, bc.back()!.value);
         let adj_coins = this.get_adj_coins(start_coin_pos);
 
-        if (start_coin_pos.val == 1 && adj_coins.length >= 5) {
-            let lowest_row = adj_coins[0].row;
+        // upgrade 1s to 5
+        if (start_coin_pos.val == 1 && adj_coins.length >= 5)
+            this.upgrade_coins(adj_coins, 5, 5);
 
-            for (let i = 0; i < 5; i++) {
-                this.board[adj_coins[i].col].get_coin(adj_coins[i].row)!.sparkle();
+        // upgrade 5s to 10
+        if (start_coin_pos.val == 5 && adj_coins.length >= 2)
+            this.upgrade_coins(adj_coins, 2, 10);
 
-                if (adj_coins[0].col == adj_coins[i].col && lowest_row > adj_coins[i].row)
-                    lowest_row = adj_coins[i].row;
-            }
+        // upgrade 10s to 50
+        if (start_coin_pos.val == 10 && adj_coins.length >= 5)
+            this.upgrade_coins(adj_coins, 5, 50);
 
-            let aa: AfterAction = new AddCoinAction(5, adj_coins[0].col);
-            let ca = new CoinAnim(this.tick + 50, this.tick + 50 + (adj_coins[0].row - lowest_row) * 10,
-                this.get_lane_width() * adj_coins[0].col + 20, (adj_coins[0].row * this.get_row_height()) + 17,
-                this.get_lane_width() * adj_coins[0].col + 20, (lowest_row * this.get_row_height()) + 17,
-                5, aa);
-            this.anims.push(ca);
+        // upgrade 50s to 100
+        if (start_coin_pos.val == 50 && adj_coins.length >= 2)
+            this.upgrade_coins(adj_coins, 2, 100);
+
+        // upgrade 100s to 500
+        if (start_coin_pos.val == 100 && adj_coins.length >= 5)
+            this.upgrade_coins(adj_coins, 5, 500);
+    }
+
+    upgrade_coins(adj_coins: CoinPos[], coin_num: number, new_coin_value: number): void {
+        let lowest_row = adj_coins[0].row;
+
+        for (let i = 0; i < coin_num; i++) {
+            this.board[adj_coins[i].col].get_coin(adj_coins[i].row)!.sparkle();
+
+            if (adj_coins[0].col == adj_coins[i].col && lowest_row > adj_coins[i].row)
+                lowest_row = adj_coins[i].row;
         }
+
+        let aa: AfterAction = new AddCoinAction(new_coin_value, adj_coins[0].col);
+        let ca = new CoinAnim(this.tick + 50, this.tick + 50 + (adj_coins[0].row - lowest_row) * 10,
+            this.get_lane_width() * adj_coins[0].col + 20, (adj_coins[0].row * this.get_row_height()) + 17,
+            this.get_lane_width() * adj_coins[0].col + 20, (lowest_row * this.get_row_height()) + 17,
+            new_coin_value, aa);
+        this.anims.push(ca);
     }
 
     get_adj_coins(coinpos: CoinPos): CoinPos[] {
