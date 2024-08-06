@@ -348,4 +348,11 @@ export class Board implements Drawable {
             return undefined;
         return this.board[lane].get_coin(this.board[lane].size() - 1);
     }
+
+    lane_coin_y(lane: number): number {
+        let bc = this.board[lane];
+        if (bc.back() == undefined) return 17;
+
+        return (bc.size() * (this.get_coin_size() + 10)) + 17;
+    }
 }

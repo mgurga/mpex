@@ -1,7 +1,7 @@
 import { bgctx, gamectx, bgcanvas, gamecanvas, gw, gh, bgw, bgh } from "./main";
 import { Page } from "./types";
 import { ColorScheme } from "./ColorScheme"
-import { hexToRGB, gwp, ghp } from "./Utils";
+import { hexToRGB, gwp, ghp, rainbow } from "./Utils";
 import { Timer } from "./Timer";
 import { Board } from "./Board";
 import { Player } from "./Player";
@@ -87,6 +87,7 @@ export class Game implements Page {
         this.board.draw(10, 10, this.cs, gw - 20, gh - 20);
         this.draw_border();
         this.player.draw(this.get_lane_x(this.player.lane) + 6, gh - 15 - this.get_lane_width(), this.cs, this.get_lane_width(), this.get_lane_width() - 5);
+        this.draw_lane_arrow();
 
         this.tick++;
     }
@@ -122,5 +123,23 @@ export class Game implements Page {
             gamectx.roundRect(i * 2, i * 2, gw - (i * 4), gh - (i * 4), 5);
             gamectx.stroke();
         }
+    }
+
+    draw_lane_arrow(): void {
+        gamectx.strokeStyle = rainbow(this.tick);
+        gamectx.fillStyle = rainbow(this.tick);
+        gamectx.lineWidth = 5;
+
+        gamectx.beginPath();
+        gamectx.moveTo(this.get_lane_x(this.player.lane) + 6 + (this.get_lane_width() / 2), gh - 20 - this.get_lane_width());
+        gamectx.lineTo(this.get_lane_x(this.player.lane) + 6 + (this.get_lane_width() / 2), this.board.lane_coin_y(this.player.lane) + 5);
+        gamectx.stroke();
+
+        let arrow_spread = Math.abs(Math.sin(this.tick / 20) * 4) + 4;
+        gamectx.beginPath();
+        gamectx.moveTo(this.get_lane_x(this.player.lane) + 6 + (this.get_lane_width() / 2), this.board.lane_coin_y(this.player.lane) - 5);
+        gamectx.lineTo(this.get_lane_x(this.player.lane) + 6 + (this.get_lane_width() / 2) - arrow_spread, this.board.lane_coin_y(this.player.lane) + 10);
+        gamectx.lineTo(this.get_lane_x(this.player.lane) + 6 + (this.get_lane_width() / 2) + arrow_spread, this.board.lane_coin_y(this.player.lane) + 10);
+        gamectx.fill();
     }
 }
