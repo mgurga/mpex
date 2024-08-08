@@ -126,13 +126,13 @@ export class Game implements Page {
     }
 
     draw_lane_arrow(): void {
-        gamectx.strokeStyle = rainbow(this.tick);
-        gamectx.fillStyle = rainbow(this.tick);
-        gamectx.lineWidth = 5;
+        gamectx.strokeStyle = "hsl(" + (this.tick % 360) + " , 100%, 50%, 0.5)";;
+        gamectx.fillStyle = "hsl(" + (this.tick % 360) + " , 100%, 50%, 0.5)";;
+        gamectx.lineWidth = 4;
 
         gamectx.beginPath();
         gamectx.moveTo(this.get_lane_x(this.player.lane) + 6 + (this.get_lane_width() / 2), gh - 20 - this.get_lane_width());
-        gamectx.lineTo(this.get_lane_x(this.player.lane) + 6 + (this.get_lane_width() / 2), this.board.lane_coin_y(this.player.lane) + 5);
+        gamectx.lineTo(this.get_lane_x(this.player.lane) + 6 + (this.get_lane_width() / 2), this.board.lane_coin_y(this.player.lane) + 10);
         gamectx.stroke();
 
         let arrow_spread = Math.abs(Math.sin(this.tick / 20) * 4) + 4;
